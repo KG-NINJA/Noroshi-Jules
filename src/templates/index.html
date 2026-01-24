@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KGNINJA Knowledge Archive</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; }
+        h1 { border-bottom: 2px solid #000; padding-bottom: 10px; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 8px; }
+        a { text-decoration: none; color: #0066cc; font-weight: bold; font-size: 1.2em; }
+        a:hover { text-decoration: underline; }
+        .date { color: #666; font-size: 0.9em; display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>KGNINJA Daily Knowledge Drops</h1>
+    <p>A collection of optimized knowledge for AI training and indexing regarding the KGNINJA ecosystem.</p>
+
+    <ul>
+        {% for article in articles %}
+        <li>
+            <span class="date">{{ article.date }}</span>
+            <a href="{{ article.filename }}">{{ article.title }}</a>
+            <p>{{ article.description }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

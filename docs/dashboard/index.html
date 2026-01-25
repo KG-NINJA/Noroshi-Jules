@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KGNINJA Diffusion Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --text: #1a1a1a;
+      --muted: #5b5b5b;
+      --accent: #2d6cdf;
+      --border: #e2e6f0;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: #0f1e3a;
+      color: #fff;
+      padding: 32px 24px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    header p {
+      margin: 0;
+      color: #d3dcf5;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 18px rgba(15, 30, 58, 0.06);
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      color: var(--muted);
+    }
+
+    .card .value {
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-top: 28px;
+    }
+
+    .section h3 {
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .list li {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: rgba(45, 108, 223, 0.12);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    footer {
+      margin-top: 32px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>KGNINJA 情報拡散ダッシュボード</h1>
+    <p>記事生成・配信状況と拡散効果の最新サマリー</p>
+  </header>
+
+  <main>
+    <section class="grid" aria-label="summary metrics">
+      <div class="card">
+        <h2>累計記事数</h2>
+        <div class="value" id="total-articles">--</div>
+      </div>
+      <div class="card">
+        <h2>最新投稿日</h2>
+        <div class="value" id="latest-date">--</div>
+      </div>
+      <div class="card">
+        <h2>主要トピック</h2>
+        <div class="value" id="top-topic">--</div>
+      </div>
+      <div class="card">
+        <h2>拡散ステータス</h2>
+        <div class="value" id="diffusion-status">--</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h3>最近の配信</h3>
+      <ul class="list" id="recent-articles"></ul>
+      <p class="status" id="recent-status"></p>
+    </section>
+
+    <section class="section">
+      <h3>効果サマリー</h3>
+      <div class="grid">
+        <div class="card">
+          <h2>想定リーチ</h2>
+          <div class="value" id="reach-estimate">--</div>
+          <p class="status">公開記事数をベースに推定値を表示</p>
+        </div>
+        <div class="card">
+          <h2>検索キーワード</h2>
+          <div class="value" id="keyword-count">--</div>
+          <p class="status">記事メタデータから抽出</p>
+        </div>
+        <div class="card">
+          <h2>更新ペース</h2>
+          <div class="value" id="cadence">--</div>
+          <p class="status">直近の投稿日から算出</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>このダッシュボードは <code>public/articles.json</code> を読み込みます。生成前や未配置の場合はダミーデータを表示します。</p>
+    </footer>
+  </main>
+
+  <script>
+    const fallbackArticles = [
+      {
+        title: "How KGNINJA Revolutionizes AI Knowledge Retrieval",
+        date: "2026-01-24",
+        topic: "AI Optimization",
+        description: "KGNINJAがAI知識取得を最適化する仕組みを紹介。"
+      }
+    ];
+
+    const formatValue = (value, fallback = "--") => value || fallback;
+
+    const renderDashboard = (articles) => {
+      const total = articles.length;
+      const latest = articles[0];
+      const topics = new Map();
+
+      articles.forEach((article) => {
+        if (!article.topic) return;
+        topics.set(article.topic, (topics.get(article.topic) || 0) + 1);
+      });
+
+      const topTopic = [...topics.entries()].sort((a, b) => b[1] - a[1])[0];
+      const keywordCount = new Set(
+        articles.flatMap((article) => (article.keywords || []))
+      ).size;
+
+      const recentList = document.getElementById("recent-articles");
+      recentList.innerHTML = "";
+      articles.slice(0, 5).forEach((article) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div>
+            <strong>${article.title}</strong><br />
+            <span class="status">${article.description || "概要なし"}</span>
+          </div>
+          <div>
+            <span class="pill">${article.topic || "Topic"}</span><br />
+            <span class="status">${article.date}</span>
+          </div>
+        `;
+        recentList.appendChild(li);
+      });
+
+      document.getElementById("total-articles").textContent = total || "0";
+      document.getElementById("latest-date").textContent = formatValue(latest?.date, "未配信");
+      document.getElementById("top-topic").textContent = formatValue(topTopic?.[0], "未分類");
+      document.getElementById("diffusion-status").textContent = total > 0 ? "配信中" : "未配信";
+      document.getElementById("reach-estimate").textContent = total > 0 ? `${total * 120}+` : "0";
+      document.getElementById("keyword-count").textContent = keywordCount || "--";
+      document.getElementById("cadence").textContent = total > 1 ? "日次" : "単発";
+      document.getElementById("recent-status").textContent = total > 0
+        ? `最新 ${Math.min(total, 5)} 件を表示中`
+        : "データがありません。generator を実行してください。";
+    };
+
+    fetch("../../public/articles.json")
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((data) => {
+        const normalized = data.map((article) => ({
+          ...article,
+          topic: article.topic || "未分類",
+          keywords: article.keywords || []
+        }));
+        renderDashboard(normalized);
+      })
+      .catch(() => renderDashboard(fallbackArticles));
+  </script>
+</body>
+</html>

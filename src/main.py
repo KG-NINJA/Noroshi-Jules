@@ -56,7 +56,9 @@ def main():
         "filename": filename,
         "title": data["title"],
         "description": data["description"],
-        "date": data["date"]
+        "date": data["date"],
+        "topic": data["topic"],
+        "keywords": data["keywords"]
     }
     history.insert(0, new_entry) # Add to top
 
